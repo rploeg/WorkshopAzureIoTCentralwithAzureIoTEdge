@@ -1,4 +1,4 @@
-# WorkshopAzureIoTCentralwithAzureIoTEdge
+# Workshop - Integrating Azure IoT Edge with Azure IoT Central
 A short workshop howto connect an Azure IoT Edge Linux VM with the temperature simulator to Azure IoT Central Preview templates
 
 1. Login to Azure IoT Central
