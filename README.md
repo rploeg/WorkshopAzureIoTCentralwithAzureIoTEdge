@@ -2,26 +2,16 @@
 
 -- this will only work with the preview templates in Azure IoT Central --
 
-This tutorial shows you how to add and configure an Azure IoT Edge device to your Azure IoT Central application. In this tutorial, we chose an IoT Edge-enabled Linux VM from Azure Marketplace.
+During this short workshop we will deploy Azure IoT Central to connect an Edge device to the environment. In this workshop, we chose an IoT Edge-enabled Linux VM from Azure Marketplace. But you can also connect a local docker container or other edge devices off course.
 
-This tutorial is made up of two parts:
+This workshop is made up of two parts:
 
 * First, as an operator, you learn how to do cloud first provisioning of an IoT Edge device.
 * Then, you learn how to do "device first" provisioning of an IoT Edge device.
 
-In this tutorial, you learn how to:
-
-> [!div class="checklist"]
->
-> * Add a new IoT Edge device
-> * Configure the IoT Edge device to help provision by using a shared access signature (SAS) key
-> * View dashboards and module health in IoT Central
-> * Send commands to a module running on the IoT Edge device
-> * Set properties on a module running on the IoT Edge device
-
 ## Prerequisites
 
-To complete this tutorial, you need an Azure IoT Central application. Follow [this quickstart to create an Azure IoT Central application](https://docs.microsoft.com/en-us/azure/iot-central/preview/quick-deploy-iot-central).
+To complete this workshop, you need an Azure IoT Central application. Follow [this quickstart to create an Azure IoT Central application](https://docs.microsoft.com/en-us/azure/iot-central/preview/quick-deploy-iot-central).
 
 ## Enable Azure IoT Edge enrollment group
 From the **Administration** page, enable SAS keys for Azure IoT Edge enrollment group.
@@ -47,7 +37,7 @@ The device goes into **Registered** mode.
 > [!NOTE]
 > You can choose to use any machine or device. The operating system can be Linux or Windows.
 
-For this tutorial, we're using an Azure IoT enabled Linux VM, created on Azure. In [Azure Marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/microsoft_iot_edge.iot_edge_vm_ubuntu?tab=Overview), select **GET IT NOW**. 
+For this workshop, we're using an Azure IoT enabled Linux VM, created on Azure. In [Azure Marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/microsoft_iot_edge.iot_edge_vm_ubuntu?tab=Overview), select **GET IT NOW**. 
 
 ![Screenshot of Azure Marketplace, with GET IT NOW highlighted](./images/cfmarketplace.png)
 
@@ -72,15 +62,15 @@ It takes a few minutes to create the resources. Select **Go to resource**.
 
 ![Screenshot of deployment completion page, with Go to resource highlighted](./images/cfvmdeploymentcomplete.png)
 
-### Provision VM as an IoT Edge device 
+### Connect with putty to the VM as an IoT Edge device 
 
 Under **Support + troubleshooting**, select **Serial console**.
 
-![Screenshot of Support + troubleshooting options, with Serial console highlighted](./images/cfserialconsole.png)
+For connecting to the VM, we will use Putty, a SSH client. You can download the client [here](https://www.putty.org/).
 
-You'll see a screen similar to the following:
+Use the IP address of your VM to connect with putty. (you can find the ip address in the Azure Portal in the overview window of the VM)
 
-![Screenshot of console](./images/cfconsole.png)
+![Screenshot of putty](./images/putty.png)
 
 Press Enter, provide the user name and password as prompted, and then press Enter again. 
 
