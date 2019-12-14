@@ -1,303 +1,160 @@
 # Workshop - Integrating Azure IoT Edge with Azure IoT Central
-A short workshop howto connect an Azure IoT Edge Linux VM with the temperature simulator to Azure IoT Central Preview templates
-
-1. Login to Azure IoT Central
-
-Downstream device relationships with a gateway and modules
-Downstream devices can connect to an IoT Edge gateway device through the $edgeHub module. This IoT Edge device becomes a transparent gateway in this scenario.
-
-Diagram of transparent gateway
-
-Downstream devices can also connect to an IoT Edge gateway device through a custom module. In the following scenario, downstream devices connect through a Modbus custom module.
-
-Diagram of custom module connection
-
-The following diagram shows connection to an IoT Edge gateway device through both types of modules (custom and $edgeHub).
-
-Diagram of connecting via both connection modules
-
-Finally, downstream devices can connect to an IoT Edge gateway device through multiple custom modules. The following diagram shows downstream devices connecting through a Modbus custom module, a BLE custom module, and the $edgeHub module.
-
-Diagram of connecting via multiple custom modules
-
-Create a template
-As a builder, you can create and edit IoT Edge device templates in your application. After you publish a device template, you can connect real devices that implement the device template.
-
-Select device template type
-To add a new device template to your application, select Device Templates on the left pane.
-
-Screenshot of Preview Application, with Device Templates highlighted
-
-Select + New to start creating a new device template.
-
-Screenshot of Device templates page, with New highlighted
-
-On the Select template type page, select Azure IoT Edge, and select Next: Customize.
-
-Screenshot of Select template type page
-
-Customize device template
-In IoT Edge, you can deploy and manage business logic in the form of modules. IoT Edge modules are the smallest unit of computation managed by IoT Edge, and can contain Azure services (such as Azure Stream Analytics), or your own solution-specific code. To understand how modules are developed, deployed, and maintained, see IoT Edge modules.
-
-At a high level, a deployment manifest is a list of module twins that are configured with their desired properties. A deployment manifest tells an IoT Edge device (or a group of devices) which modules to install, and how to configure them. Deployment manifests include the desired properties for each module twin. IoT Edge devices report back the reported properties for each module.
-
-Use Visual Studio Code to create a deployment manifest. To learn more, see Azure IoT Edge for Visual Studio Code.
 
-Here's a basic deployment manifest, with one module as an example to be used for this tutorial. Copy the following JSON, and save it as a .json file.
+-- this will only work with the preview templates in Azure IoT Central --
 
-JSON
+This tutorial shows you how to add and configure an Azure IoT Edge device to your Azure IoT Central application. In this tutorial, we chose an IoT Edge-enabled Linux VM from Azure Marketplace.
 
-Copy
-{
-  "modulesContent": {
-    "$edgeAgent": {
-      "properties.desired": {
-        "schemaVersion": "1.0",
-        "runtime": {
-          "type": "docker",
-          "settings": {
-            "minDockerVersion": "v1.25",
-            "loggingOptions": "",
-            "registryCredentials": {}
-          }
-        },
-        "systemModules": {
-          "edgeAgent": {
-            "type": "docker",
-            "settings": {
-              "image": "mcr.microsoft.com/azureiotedge-agent:1.0",
-              "createOptions": "{}"
-            }
-          },
-          "edgeHub": {
-            "type": "docker",
-            "status": "running",
-            "restartPolicy": "always",
-            "settings": {
-              "image": "mcr.microsoft.com/azureiotedge-hub:1.0",
-              "createOptions": "{}"
-            }
-          }
-        },
-        "modules": {
-          "SimulatedTemperatureSensor": {
-            "version": "1.0",
-            "type": "docker",
-            "status": "running",
-            "restartPolicy": "always",
-            "settings": {
-              "image": "mcr.microsoft.com/azureiotedge-simulated-temperature-sensor:1.0",
-              "createOptions": "{}"
-            }
-          }
-        }
-      }
-    },
-    "$edgeHub": {
-      "properties.desired": {
-        "schemaVersion": "1.0",
-        "routes": {
-            "route": "FROM /* INTO $upstream"
-        },
-        "storeAndForwardConfiguration": {
-          "timeToLiveSecs": 7200
-        }
-      }
-    },
-    "SimulatedTemperatureSensor": {
-      "properties.desired": {
-           "SendData": true,
-           "SendInterval": 10
-      }
-    }
-  }
-}
-Upload an IoT Edge deployment manifest
-On the Customize device page, under Upload an Azure IoT Edge deployment manifest, select Browse.
+This tutorial is made up of two parts:
 
-Screenshot of Customize device page, with Browse highlighted
+* First, as an operator, you learn how to do cloud first provisioning of an IoT Edge device.
+* Then, you learn how to do "device first" provisioning of an IoT Edge device.
 
-If you plan to create an IoT Edge Gateway device template, make sure to select Gateway device with downstream devices.
+In this tutorial, you learn how to:
 
-Screenshot of Customize device page, with Gateway device with downstream devices highlighted
+> [!div class="checklist"]
+>
+> * Add a new IoT Edge device
+> * Configure the IoT Edge device to help provision by using a shared access signature (SAS) key
+> * View dashboards and module health in IoT Central
+> * Send commands to a module running on the IoT Edge device
+> * Set properties on a module running on the IoT Edge device
 
-In the file selection dialog box, select the deployment manifest file, and select Open.
+## Prerequisites
 
-IoT Edge validates the deployment manifest file against a schema. If the validation is successful, select Review.
+To complete this tutorial, you need an Azure IoT Central application. Follow [this quickstart to create an Azure IoT Central application](https://docs.microsoft.com/en-us/azure/iot-central/preview/quick-deploy-iot-central).
 
-Screenshot of Customize device page, with Deployment Manifest and Review highlighted
+## Enable Azure IoT Edge enrollment group
+From the **Administration** page, enable SAS keys for Azure IoT Edge enrollment group.
 
-The following flowchart shows a deployment manifest life cycle in IoT Central.
+![Screenshot of Administration page, with Device connection highlighted](./images/groupenrollment.png)
 
-Flowchart of deployment manifest life cycle
+## Provision a "cloud first" Azure IoT Edge device	
+In this section, you create a new IoT Edge device by using the environment sensor template, and you provision a device. 
+Select **Devices** > **Environment Sensor Template**. 
 
-Next, you'll see a review page, with details of the deployment manifest. This page shows a list of modules from the deployment manifest. In this tutorial, note that the SimulatedTemperatureSensor module is listed. Select Create.
+![Screenshot of Devices page, with Environment Sensor Template highlighted](./images/tutorial-add-edge-as-leaf-device/deviceexplorer.png)
 
-Screenshot of Review page, with Module and Create highlighted
+Select **+ New**, and enter a device ID and name of your choosing. Select **Create**.
 
-If you had selected a gateway device, you see the following review page.
+![Screenshot of Create new device dialog box, with Device ID and Create highlighted](./images/tutorial-add-edge-as-leaf-device/cfdevicecredentials.png)
 
-Screenshot of Review page, with Azure IoT Edge Gateway highlighted
+The device goes into **Registered** mode.
 
-You create a device template with module capability models. In this tutorial, you create a device template with the SimulatedTemperatureSensor module capability model.
+![Screenshot of Environment Sensor Template page, with Device status highlighted](./images/tutorial-add-edge-as-leaf-device/cfregistered.png)
 
-Change title of the device template to Environment Sensor Device Template.
+## Deploy an IoT Edge enabled Linux VM
 
-Screenshot of device template, with updated title highlighted
+> [!NOTE]
+> You can choose to use any machine or device. The operating system can be Linux or Windows.
 
-In IoT Edge device, model IoT Plug and Play as follows:
+For this tutorial, we're using an Azure IoT enabled Linux VM, created on Azure. In [Azure Marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/microsoft_iot_edge.iot_edge_vm_ubuntu?tab=Overview), select **GET IT NOW**. 
 
-Every IoT Edge device template has a device capability model.
-For every custom module listed in the deployment manifest, a module capability model is generated.
-A relationship is established between each module capability model and a device capability model.
-A module capability model implements module interfaces.
-Each module interface contains telemetry, properties, and commands.
-Diagram of IoT Edge modeling
+![Screenshot of Azure Marketplace, with GET IT NOW highlighted](./images/tutorial-add-edge-as-leaf-device/cfmarketplace.png)
 
-Add capabilities to a module capability model
-Here is a sample output from the SimulatedTemperatureSensor module:
+Select **Continue**.
 
-JSON
+![Screenshot of Create this app in Azure dialog box, with Continue highlighted](./images/tutorial-add-edge-as-leaf-device/cfmarketplacecontinue.png)
 
-Copy
-{
 
-	"machine": {
+You're taken to the Azure portal. Select **Create**.
 
-		"temperature": 75.0,
-		"pressure": 40.2
-	},
-	"ambient": {
-		"temperature": 23.0,
-		"humidity": 30.0
-	},
-	"timeCreated": ""
-}
-You can add capabilities to the SimulatedTemperatureSensor module, which will reflect the preceding output.
+![Screenshot of the Azure portal, with Create highlighted](./images/tutorial-add-edge-as-leaf-device/cfubuntu.png)
 
-To manage an interface of the SimulatedTemperatureSensor module capability model, select Manage > Add Capability.
+Select **Subscription**, create a new resource group, and select **(US) West US 2** for VM availability. Then, enter user and password information. These will be required for future steps, so remember them. Select **Review + create**.
 
-Screenshot of Environment Sensor Template, with Add Capability highlighted
+![Screenshot of Create a virtual machine details page, with various options highlighted](./images/tutorial-add-edge-as-leaf-device/cfvm.png)
 
-Add a machine as an object type.
+After validation, select **Create**.
 
-Screenshot of Environment Sensor Template Capabilities page, with Schema highlighted
+![Screenshot of Create a virtual machine page, with Validation passed and Create highlighted](./images/tutorial-add-edge-as-leaf-device/cfvmvalidated.png)
 
-Select Define. In the dialog box that appears, change the object name to machine. Create temperature and pressure properties, and select Apply.
+It takes a few minutes to create the resources. Select **Go to resource**.
 
-Screenshot of attributes dialog box, with various options highlighted
+![Screenshot of deployment completion page, with Go to resource highlighted](./images/tutorial-add-edge-as-leaf-device/cfvmdeploymentcomplete.png)
 
-Add ambient as an object type.
+### Provision VM as an IoT Edge device 
 
-Select Define. In the dialog box that appears, change the object name to ambient. Create temperature and humidity properties, and select Apply.
+Under **Support + troubleshooting**, select **Serial console**.
 
-Screenshot of attributes dialog box, with various options highlighted
+![Screenshot of Support + troubleshooting options, with Serial console highlighted](./images/tutorial-add-edge-as-leaf-device/cfserialconsole.png)
 
-Add timeCreated as a DateTime type, and select Save.
+You'll see a screen similar to the following:
 
-Screenshot of Environment Sensor Template, with Save highlighted
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfconsole.png)
 
-Add relationships
-If you selected an IoT Edge device to be a gateway device, you can add downstream relationships to device capability models for devices you want to connect to the gateway device.
+Press Enter, provide the user name and password as prompted, and then press Enter again. 
 
-Screenshot of Environment Gateway Template, with Add Relationship highlighted
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfconsolelogin.png)
 
-You can add a relationship at a device or at a module.
+To run a command as administrator (user "root"), enter: **sudo su –**
 
-Screenshot of Environment Gateway Template, with device and module level relationships highlighted
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfsudo.png)
 
-You can select a downstream device capability model, or you can select the asterisk symbol.
+Check the IoT Edge runtime version. At the time of this writing, the current GA version is 1.0.8.
 
-Screenshot of Environment Gateway Template, with Target highlighted
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfconsoleversion.png)
 
-For this tutorial, select the asterisk. This option allows any downstream relationship. Then select Save.
+Install the vim editor, or use nano if you prefer. 
 
-Screenshot of Environment Gateway Template, with Target highlighted
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfconsolevim.png)
 
-Add cloud properties
-A device template can include cloud properties. Cloud properties only exist in the IoT Central application, and are never sent to, or received from, a device.
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfvim.png)
 
-Select Cloud Properties > + Add Cloud Property. Use the information in the following table to add a cloud property to your device template.
+Edit the IoT Edge config.yaml file.
 
-Display name	Semantic type	Schema
-Last Service Date	None	Date
-Customer name	None	String
-Select Save.
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfconsoleconfig.png)
 
-Screenshot of Environment Sensor Template, with Save highlighted
+Scroll down, and comment out the connection string portion of the yaml file. 
 
-Add customizations
-Use customizations to modify an interface, or to add IoT Central-specific features to a capability that doesn't require you to version your device capability model. You can customize fields when the capability model is in a draft or published state. You can only customize fields that don't break interface compatibility. For example, you can:
+**Before**
 
-Customize the display name and units of a capability.
-Add a default color to use when the value appears on a chart.
-Specify initial, minimum, and maximum values for a property.
-You can't customize the capability name or capability type.
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfmanualprovisioning.png)
 
-When you're finished customizing, select Save.
+**After** (Press Esc, and press lowercase a, to start editing.)
 
-Screenshot of Environment Sensor Template Customize page
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfmanualprovisioningcomments.png)
 
-Create views
-As a builder, you can customize the application to display relevant information about the environmental sensor device to an operator. Your customizations enable the operator to manage the environmental sensor devices connected to the application. You can create two types of views for an operator to use to interact with devices:
+Uncomment the symmetric key portion of the yaml file. 
 
-Forms to view and edit device and cloud properties.
-Dashboards to visualize devices.
-Configure a view to visualize devices
-A device dashboard lets an operator visualize a device by using charts and metrics. As a builder, you can define what information appears on a device dashboard. You can define multiple dashboards for devices. To create a dashboard to visualize the environmental sensor telemetry, select Views > Visualizing the Device:
+**Before**
 
-Screenshot of Environment Sensor Template Views page, with Visualizing the Device highlighted
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfconsolesymmcomments.png)
 
-Ambient Telemetry and Machine Telemetry are complex objects. To create charts:
+**After**
 
-Drag Ambient Telemetry, and select Line chart.
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfconsolesymmuncomments.png)
 
-Screenshot of Environment Sensor Template, with Ambient Telemetry and Line chart highlighted
+Go to IoT Central. Get the scope ID, device ID, and symmetric key of the IoT Edge device.
+![Screenshot of IoT Central, with various device connection options highlighted](./images/tutorial-add-edge-as-leaf-device/cfdeviceconnect.png)
 
-Select the configure icon. Select Temperature and Humidity to visualize the data, and select Update configuration.
+Go to the Linux computer, and replace the scope ID and registration ID with the device ID and symmetric key.
 
-Screenshot of Environment Sensor Template, with various options highlighted
+Press Esc, and type **:wq!**. Press Enter to save your changes.
 
-Select Save.
+Restart IoT Edge to process your changes, and press Enter.
 
-You can add more tiles that show other properties or telemetry values. You can also add static text, links, and images. To move or resize a tile on the dashboard, move the mouse pointer over the tile, and drag the tile to a new location or resize it.
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfrestart.png)
 
-Screenshot of Environment Sensor Template Dashboard view
+Type **iotedge list**. After a few minutes, you'll see three modules deployed.
 
-Add a device form
-A device form lets an operator edit writeable device properties and cloud properties. As a builder, you can define multiple forms and choose which device and cloud properties to show on each form. You can also display read-only device properties on a form.
+![Screenshot of console](./images/tutorial-add-edge-as-leaf-device/cfconsolemodulelist.png)
 
-To create a form to view and edit environmental sensor properties:
 
-In the Environmental Sensor Template, go to Views. Select the Editing Device and Cloud data tile to add a new view.
+## IoT Central device explorer 
 
-Screenshot of Environmental Sensor Template Views page, with Editing Device and Cloud data highlighted
+In IoT Central, your device moves into provisioned state.
 
-Enter the form name Environmental Sensor properties.
+![Screenshot of IoT Central Devices options, with Device status highlighted](./images/tutorial-add-edge-as-leaf-device/cfprovisioned.png)
 
-Drag the Customer name and Last service date cloud properties onto the existing section on the form.
+The **Modules** tab shows the status of the device and module on IoT Central. 
 
-Screenshot of Environmental Sensor Template Views page, with various options highlighted
+![Screenshot of IoT Central Modules tab](./images/tutorial-add-edge-as-leaf-device/cfiotcmodulestatus.png)
 
-Select Save.
 
-Publish a device template
-Before you can create a simulated environmental sensor, or connect a real environmental sensor, you need to publish your device template.
+You'll see cloud properties in a form, from the device template you created in the previous steps. Enter values, and select **Save**. 
 
-To publish a device template:
+![Screenshot of My Linux Edge Device form](./images/tutorial-add-edge-as-leaf-device/deviceinfo.png)
 
-Go to your device template from the Device Templates page.
+Here's a view presented in the form of a dashboard tile.
 
-Select Publish.
-
-Screenshot of Environmental Sensor Template, with Publish highlighted
-
-In the Publish a Device Template dialog box, choose Publish.
-
-Screenshot of Publish a Device Template dialog box, with Publish highlighted
-
-After a device template is published, it's visible on the Devices page and to the operator. In a published device template, you can't edit a device capability model without creating a new version. However, you can make updates to cloud properties, customizations, and views, in a published device template. These updates don't cause a new version to be created. After you make any changes, select Publish to push those changes out to your operator.
-
-Screenshot of Device templates list of published templates
-
-
+![Screenshot of My Linux Edge Device dashboard tiles](./images/tutorial-add-edge-as-leaf-device/dashboard.png)
