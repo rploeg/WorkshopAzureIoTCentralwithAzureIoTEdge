@@ -1,6 +1,7 @@
 # Workshop - Integrating Azure IoT Edge with Azure IoT Central
 
--- this will only work with the preview templates in Azure IoT Central --
+> [!NOTE]
+> This workshop only works with the preview template of Azure IoT Central!
 
 During this short workshop we will deploy Azure IoT Central to connect an Edge device to the environment. In this workshop, we chose an IoT Edge-enabled Linux VM from Azure Marketplace. But you can also connect a local docker container or other edge devices off course.
 
